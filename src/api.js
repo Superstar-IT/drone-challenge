@@ -1,4 +1,5 @@
 const express = require('express');
+const fileUpload = require('express-fileupload');
 const app = express();
 const cors = require('cors');
 const path = require('path');
@@ -6,14 +7,19 @@ const fs = require('fs-extra');
 
 
 app.use(cors());
+app.use(fileUpload());
 
 app.get('/', (req, res) => {
     res.json({foo: 'bar'});
 });
 
-app.get('/instruction', async (req, res) => {
-    const data = await fs.readFile(path.join(__dirname, '../sample-input.txt'));
-    const instruction = data.toString();
+app.post('/instruction', async (req, res) => {
+    if (!req.files) {
+        return res.status(500).send({ msg: "file is not found" })
+    }
+
+    const fileInput = req.files.file;
+    const instruction = fileInput.data.toString();
 
     if(!instruction) {
         return res.status(400).send('instruction required');
@@ -46,7 +52,8 @@ app.get('/instruction', async (req, res) => {
         }
     });
 
-    res.json({ answer: Object.keys(billBoards).length });
+    res.json({ 
+        billBoards: Object.keys(billBoards).length });
 })
 
 app.listen(4001, () => console.log(`Api started at http://localhost:4001`));
